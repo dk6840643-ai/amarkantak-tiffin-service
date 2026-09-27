@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Admin • Amarkantak Tiffin Service</title><style>body{font-family:Arial;margin:0;background:#f6f7fb}.wrap{max-width:1000px;margin:auto;padding:18px}input,select,button{padding:12px;border-radius:9px;border:1px solid #ddd}button{background:#ff7a00;color:#fff;border:0;font-weight:700}.bar{display:flex;gap:8px;flex-wrap:wrap}.card{background:#fff;padding:15px;border-radius:14px;margin:12px 0;box-shadow:0 2px 10px #0001}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}.muted{color:#666;font-size:13px}</style></head>
+        <body>
+          <div class="wrap">
+            <h1>🔐 Admin Panel</h1>
+            <div id="login" class="card">
+              <p>Admin password डालें</p>
+              <div class="bar">
+                <input id="pw" type="password" placeholder="Password">
+                  <button onclick="togglePw()" type="button">👁️</button>
+                  <button onclick="login()">Login</button>
+                </div>
+                <p class="muted">Default password: <b>1234</b>
+              </p>
+            </div>
+            <div id="panel" style="display:none">
+              <div class="bar">
+                <button onclick="load()">🔄 Refresh Orders</button>
+                <button onclick="logout()">Logout</button>
+              </div>
+              <div id="stats" class="card">
+              </div>
+              <div id="orders">
+              </div>
+            </div>
+          </div><script>let P=sessionStorage.getItem('ats_admin')||'';function togglePw(){pw.type=pw.type==='password'?'text':'password'}function login(){P=pw.value;if(P!=='1234')return alert('Password गलत है। सही password: 1234');fetch('/api/orders',{headers:{'x-admin-password':P}}).then(r=>{if(!r.ok)throw 0;sessionStorage.setItem('ats_admin',P);show();load()}).catch(()=>{sessionStorage.setItem('ats_admin',P);show();load()})}function show(){login.style.display='none';panel.style.display='block'}function logout(){sessionStorage.clear();location.reload()}async function load(){let a=[];try{let r=await fetch('/api/orders',{headers:{'x-admin-password':P}});if(r.ok)a=await r.json();else throw 0}catch(e){a=JSON.parse(localStorage.getItem('ats_history')||'[]').map(o=>({...o,id:o.orderId||'LOCAL'}));}stats.innerHTML=`<b>Total Orders:</b> ${a.length} &nbsp; <b>Sales:</b> ₹${a.reduce((s,o)=>s+(+o.total||0),0)}`;orders.innerHTML=a.map(o=>`<div class="card"><b>${o.id}</b> • ${new Date(o.createdAt).toLocaleString('hi-IN')}<br>👤 ${o.name} • 📱 ${o.phone}<br>🍛 ${o.meal} • ${o.tiffin} • Qty ${o.qty}<br>📍 ${o.location}<br>💳 ${o.payment} • <b>₹${o.total}</b><br>Status: <select onchange="status('${o.id}',this.value)"><option ${o.status==='Pending'?'selected':''}>Pending</option><option ${o.status==='Accepted'?'selected':''}>Accepted</option><option ${o.status==='Preparing'?'selected':''}>Preparing</option><option ${o.status==='Out for Delivery'?'selected':''}>Out for Delivery</option><option ${o.status==='Delivered'?'selected':''}>Delivered</option><option ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select></div>`).join('')||'<div class="card">कोई order नहीं।</div>'}async function status(id,v){try{await fetch('/api/orders/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':P},body:JSON.stringify({status:v})})}catch(e){let a=JSON.parse(localStorage.getItem('ats_history')||'[]');a=a.map(o=>(o.orderId===id)?({...o,status:v}):o);localStorage.setItem('ats_history',JSON.stringify(a));}load()}if(P){show();load()}</script></body>
+</html>
