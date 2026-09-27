@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta name="theme-color" content="#ff7a00">
+          <link rel="manifest" href="manifest.json">
+            <title>Amarkantak Tiffin Service 🍱</title><style>body{font-family:Arial,sans-serif;background:#fff7ed;margin:0;color:#222}.wrap{max-width:720px;margin:auto;padding:18px}.hero{background:#ff7a00;color:#fff;border-radius:20px;padding:22px}h1{margin:0 0 6px}label{font-weight:700;display:block;margin-top:14px}.card{background:#fff;padding:18px;border-radius:16px;margin:14px 0;box-shadow:0 3px 14px #0001}input,select,textarea,button{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;box-sizing:border-box;font-size:16px}button{background:#ff7a00;color:#fff;border:0;font-weight:700;margin-top:12px;cursor:pointer}.secondary{background:#333}.price{font-size:22px;font-weight:800;margin-top:15px}.small{font-size:13px;color:#666}.ok{background:#ecfdf5;padding:12px;border-radius:10px;margin-top:12px;display:none}</style></head>
+            <body>
+              <div class="wrap">
+                <div class="hero">
+                  <h1>🍱 Amarkantak Tiffin Service</h1>
+                  <div>घर का स्वाद • समय पर डिलीवरी</div>
+                </div>
+                <div class="card">
+                  <h2>आज का Menu</h2>
+                  <p>🍚 चावल • 🫓 4 रोटी • 🥣 दाल • 🥬 मौसमी सब्जी • 🧅 सलाद/प्याज • 🥒 अचार</p>
+                  <p class="small">Menu आप server के code में बाद में बदल सकते हैं।</p>
+                </div>
+                <form id="order" class="card">
+                  <h2>Order करें</h2>
+                  <label>Meal</label>
+                  <select id="meal">
+                    <option value="Lunch">Lunch</option>
+                    <option value="Dinner">Dinner</option>
+                    <option value="Lunch + Dinner">Lunch + Dinner</option>
+                  </select>
+                  <label>Tiffin</label>
+                  <select id="tiffin">
+                    <option value="Own Tiffin" data-price="50">अपना Tiffin — ₹50/meal</option>
+                    <option value="Our Tiffin" data-price="60">हमारा Tiffin — ₹60/meal</option>
+                    <option value="Premium Tiffin" data-price="70">Premium Tiffin — ₹70/meal</option>
+                  </select>
+                  <label>Quantity</label>
+                  <input id="qty" type="number" min="1" value="1">
+                    <label>नाम</label>
+                    <input id="name" required placeholder="आपका नाम">
+                      <label>मोबाइल नंबर</label>
+                      <input id="phone" required inputmode="numeric" placeholder="10 अंकों का नंबर">
+                        <label>Delivery Location</label>
+                        <textarea id="location" required placeholder="Hostel / Room / Village / Address">
+                        </textarea>
+                        <label>Payment</label>
+                        <select id="payment">
+                          <option>Cash on Delivery</option>
+                          <option>UPI</option>
+                        </select>
+                        <div class="price">Total: ₹<span id="total">50</span>
+                      </div>
+                      <button type="submit">📲 Order Now</button>
+                      <div id="msg" class="ok">
+                      </div>
+                    </form>
+                    <div class="card">
+                      <h2>📅 Monthly Subscription</h2>
+                      <p>Lunch + Dinner की monthly service के लिए WhatsApp पर request भेजें।</p>
+                      <button onclick="subscribe()">Subscription Request</button>
+                    </div>
+                    <div class="card">
+                      <h2>📦 My Order History</h2>
+                      <div id="history" class="small">इस device के orders यहाँ दिखेंगे।</div>
+                    </div>
+                    <div class="card">
+                      <button class="secondary" onclick="location.href='/admin.html'">🔐 Admin Panel</button>
+                    </div>
+                  </div><script>const UPI='9098704271@axl',WA='919098704271';function meals(){return document.getElementById('meal').value==='Lunch + Dinner'?2:1}function calc(){let p=+document.querySelector('#tiffin option:checked').dataset.price;document.getElementById('total').textContent=p*+qty.value*meals()}document.querySelectorAll('#meal,#tiffin,#qty').forEach(x=>x.addEventListener('input',calc));function save(o){let a=JSON.parse(localStorage.getItem('ats_history')||'[]');a.unshift(o);localStorage.setItem('ats_history',JSON.stringify(a.slice(0,20)));render()}function render(){let a=JSON.parse(localStorage.getItem('ats_history')||'[]');history.innerHTML=a.length?a.map(o=>`<div class="card"><b>${o.orderId||''}</b><br>${o.meal} • ${o.tiffin}<br>₹${o.total} • ${o.status||'Pending'}<br>${new Date(o.createdAt).toLocaleString('hi-IN')}</div>`).join(''):'अभी कोई order नहीं।'}async function sendWhatsApp(o){let t=`🍱 *Amarkantak Tiffin Service*\nOrder ID: ${o.orderId}\nनाम: ${o.name}\nमोबाइल: ${o.phone}\nMeal: ${o.meal}\nTiffin: ${o.tiffin}\nQuantity: ${o.qty}\nLocation: ${o.location}\nPayment: ${o.payment}\nTotal: ₹${o.total}`;location.href='https://wa.me/'+WA+'?text='+encodeURIComponent(t)}document.getElementById('order').onsubmit=async e=>{e.preventDefault();let o={name:name.value,phone:phone.value,location:location.value,meal:meal.value,tiffin:tiffin.value,qty:+qty.value,payment:payment.value,total:+total.textContent,createdAt:new Date().toISOString()};try{let r=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});let d=await r.json();if(!r.ok)throw Error(d.error);o.orderId=d.order.id;save(o);msg.style.display='block';msg.textContent='Order save हो गया। WhatsApp खुल रहा है…';if(o.payment==='UPI')setTimeout(()=>location.href=`upi://pay?pa=${encodeURIComponent(UPI)}&pn=Amarkantak%20Tiffin%20Service&am=${o.total}&cu=INR`,500);setTimeout(()=>sendWhatsApp(o),900)}catch(err){alert('Server चालू नहीं है या order save नहीं हुआ: '+err.message)}};function subscribe(){let t=`Amarkantak Tiffin Service Monthly Subscription request\nनाम: ${name.value||''}\nमोबाइल: ${phone.value||''}\nLocation: ${location.value||''}`;location.href='https://wa.me/'+WA+'?text='+encodeURIComponent(t)}render();calc();</script></body>
+</html>
